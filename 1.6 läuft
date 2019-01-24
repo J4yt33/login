@@ -1,0 +1,405 @@
+/*
+ ============================================================================
+ Name        : 19.c
+ Author      :
+ Version     :
+ Copyright   : Your copyright notice
+ Description : Hello World in C, Ansi-style
+ ============================================================================
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include "console.h"
+#include <time.h>
+
+
+void Sperre(int Zeit){
+	//start und stop variablen
+	time_t Start, Stop;
+	//zeitdifferenz
+	double Diff;
+	//stoppe die zeit
+	Start=time(NULL);
+	//ohne das printf funktioniert die Zeitfunktion nicht
+	printf("\n");
+	//solange zeitdifferenz nicht erreicht pausiere
+	while((Diff=difftime(Stop=time(NULL),Start)) != Zeit);
+	//lösche bildschirminhalt
+	CLS;
+}
+
+
+void KennwortEingeben(char Passwort[15]){
+	//zaehlvariable
+	int i,j,k;
+
+
+	//laenge des kennworts
+	int Len=0;
+	//brauche die länge zweimal
+	int TempLen;
+	//"loesche" bildschirminhalt
+	CLS;
+	//eingabeaufforderung
+	printf("Bitte waehlen sie ihr Passwort ein\nKennwort:");
+	scanf("%s",Passwort);
+	//laenge des kennworts berechnen
+	Len=strlen(Passwort);
+	TempLen=Len;
+
+	//gebe so viele sternchen aus wie die kennworteingabe lang war
+	//gebe das kennwort nochmal aus und ueberschreibe alles mit asteriksen
+	for(j=0;j<=Len;j++){
+		for(i=0;i<TempLen;i++){
+			printf("%c",Passwort[i]);
+		}
+		for(k=0;k<j;k++){
+			printf("*");
+		}
+		Sperre(1);
+		TempLen--;
+	}
+
+}
+
+
+
+
+void Registrieren(char Datenbank[][15]){
+	//passwort policy
+		int Gros=0;
+		int Klein=0;
+		int Ziffer=0;
+		int Pruef=0;
+	//platz für altes Kennwort
+	char EingabeAlt[15]={'0'};
+	//platz für neues Kennwort
+	char EingabeNeu[15]={'0'};
+	//indizierung in der db
+	int Zeile=0;
+	//laufvariable
+	int i;
+	//länge der Zeile
+	int Len=0;
+	//eingabe
+	char Eingabe[10];
+	//temp zum überprüfen auf korrekte Eingabe
+	int CtoI;
+	//schau nach dem nächsten freien Platz in der Datenbank
+	for(Zeile=0;Zeile<120;i=Zeile=Zeile+2){
+		Len=strlen(Datenbank[Zeile]);
+		if(Len<6)break;
+	}
+
+	//lese namen ein
+	do{
+		printf("Bitte geben sie ihren Benutzernamen ein\n");
+		scanf("%s",Eingabe);
+		Len=strlen(Eingabe);
+		if((Len<6)||(Len>9))printf("Ungueltige Eingabe\n");
+	}while((Len<6)||(Len>9));
+
+
+
+
+	//erstes zeichen muss ein großbuchstabe sein
+	CtoI=(int)Eingabe[0];
+	if(CtoI<64||CtoI>90){
+		for(i=1;i<Len-1;i++){
+			//ab dem zweiten zeichen klein oder zahl
+			CtoI=(int)Eingabe[i];
+			if(((CtoI>47)&&(CtoI<58))||((CtoI>96)&&(CtoI<123))){
+
+			}else{
+//eingabe inkorrekt--> neu eingeben
+				printf("Eingabe inkorrekt\n");
+				Registrieren(Datenbank);
+				break;
+			}
+		}
+	}
+		//eingabe korrekt schreibe Namen in db
+		strcpy(Datenbank[Zeile],Eingabe);
+
+		//lese Kennwort ein
+		do{
+			printf("Bitte geben sie ihr neues Passwort ein\n:");
+			KennwortEingeben(EingabeAlt);
+			Len=strlen(EingabeAlt);
+
+			//Pruefe auf korrekte eingabe
+			for(i=0;i<Len;i++){
+				Pruef=(int)EingabeAlt[i];
+
+				if(Pruef>64&&Pruef<91)Gros=1;
+				if (Pruef>96&&Pruef<123)Klein=1;
+				if(Pruef>47&&Pruef<58)Ziffer=1;
+			}
+
+
+			if(Len<8||Len>14||Gros==0||Klein==0||Ziffer==0)printf("ungueltige Eingabe, beachten sie die Richtlinien zur Kennwortvergabe\n\n");
+
+		}while((Len<8)||(Len>14)||Gros==0||Klein==0||Ziffer==0);
+
+		//wiederhole kennwort eingabe solange bis sie übereinstimmen
+		do{
+			printf("Bitte geben sie ihr neues Kennwort erneut ein\n:");
+			KennwortEingeben(EingabeNeu);
+			//pruefe ob das alte mit dem neuen kennwort übereinstimmt
+			if(strcmp(EingabeNeu,EingabeAlt)!=0)printf("Die Kennwörter stimmen nicht überein.\n");
+		}while(strcmp(EingabeNeu,EingabeAlt)!=0);
+
+
+		//ersetze altes mit neuem kennwort
+		strcpy(Datenbank[Zeile+1],EingabeNeu);
+
+
+		printf("Registrierung erfolgreich, aktualisiere Datenbank...");
+
+		//aktualisiere Datenbank
+		ChangeDb(Datenbank);
+
+	}
+
+
+
+void Login(char Datenbank[][15]){
+	//speicherplatz für die namens eingabe
+	char Eingabe[15]={'0'};
+	//zähle die anzahl der falschen eingaben
+	int Inkorrekt=0;
+	//auswahl ob passwort geändert werden soll oder nicht
+	int Choose=0;
+	//zählvariable
+	int i;
+	//groeße des arrays
+	int GroesseDb=0;
+	//anzahl user
+	int AnzUser;
+	//user vorhanden?
+	int UserVorhanden=0;
+	//ermittle größe des arrays
+	for(i=0;i<240;i++){
+		if(Datenbank[i][0]!='0'){
+			GroesseDb++;
+		}else{
+			break;
+		}
+	}
+	AnzUser=GroesseDb/2;
+
+
+	//eingabeaufforderung /einlesen des namens
+	printf("Bitte geben sie ihren Benutzernamen ein\n:");
+	scanf("%s",&Eingabe);
+
+	//suche nach namen in Db
+	for(i=0;i<AnzUser;i=i+2){
+		if(strcmp(Eingabe,Datenbank[i])){
+			UserVorhanden=1;
+			break;
+		}else{
+			i++;
+		}}
+
+	if(UserVorhanden==1){
+		//prüfe passwort
+		do{
+			//eingabeaufforderung passwort
+			KennwortEingeben(Eingabe);
+			//pruefe passwort
+			if(strcmp(Eingabe,Datenbank[i-2])==0){
+				printf("Passwort korrekt");
+				break;
+			}else{
+				printf("Das war leider falsch\n");
+				Inkorrekt++;
+			}
+		}while(Inkorrekt<3);
+
+		//sperre
+		if(Inkorrekt==3){
+			printf("sie wurden für 2 Minuten gesperrt\n");
+			Sperre(120);
+		}
+
+
+	}else{
+		printf("Der User existiert nicht");
+
+	}
+	//abfrage ob kennwort geändert werden soll
+	printf("moechten sie ihr kennwort ändern?\nJa=1\nNein=0\n");
+	scanf("%i",&Choose);
+	if(Choose==1)ChangePw(Datenbank,i-2);
+
+}
+
+
+void menue(char Datenbank[][15]){
+	//eingabe
+	int ans=0;
+	//eingabeaufforderung
+	printf("Bitte waehlen sie\n\n");
+	printf("1)Login \n2)Registrieren\n");
+	scanf("%i",&ans);
+	//auswahl
+	switch(ans){
+	case 1:Login(Datenbank);break;
+	case 2:Registrieren(Datenbank);break;
+	default:menue(Datenbank);break;
+	}
+
+}
+
+void ChangePw(char Datenbank[][15],int Zeile){
+	//platz für altes Kennwort
+	char EingabeAlt[15]={'0'};
+	//platz für neues Kennwort
+	char EingabeNeu[15]={'0'};
+	//kennwort laenge
+	int Len=0;
+	//passwort policy
+	int Gros=0;
+	int Klein=0;
+	int Ziffer=0;
+	int Pruef=0;
+	//Zählvariable
+	int i;
+	//abfrage altes Kennwort
+	printf("Bitte geben ihr altes Kennwort ein\n:");
+	KennwortEingeben(EingabeAlt);
+	//pruefe altes kennwort
+	if(strcmp(EingabeAlt,Datenbank[Zeile])==0){
+		//altes kennwort ok
+
+		//lese Kennwort ein
+		do{
+			printf("Bitte geben sie ihr neues Passwort ein\n:");
+			scanf("%s",EingabeAlt);
+			Len=strlen(EingabeAlt);
+
+			//Pruefe auf korrekte eingabe
+			for(i=0;i<Len;i++){
+				Pruef=(int)EingabeAlt[i];
+
+				if(Pruef>64&&Pruef<91)Gros=1;
+				if (Pruef>96&&Pruef<123)Klein=1;
+				if(Pruef>47&&Pruef<58)Ziffer=1;
+			}
+
+
+			if(Len<8||Len>14||Gros==0||Klein==0||Ziffer==0)printf("ungueltige Eingabe, beachten sie die Richtlinien zur Kennwortvergabe\n\n");
+
+		}while((Len<8)||(Len>14)||Gros==0||Klein==0||Ziffer==0);
+
+		//wiederhole kennwort eingabe solange bis sie übereinstimmen
+		do{
+			printf("Bitte geben sie ihr neues Kennwort erneut ein\n:");
+			scanf("%s",&EingabeNeu);
+			//pruefe ob das alte mit dem neuen kennwort übereinstimmt
+			if(strcmp(EingabeNeu,EingabeAlt)!=0)printf("Die Kennwörter stimmen nicht überein.\n");
+		}while(strcmp(EingabeNeu,EingabeAlt)!=0);
+
+
+		//ersetze altes mit neuem kennwort
+		strcpy(Datenbank[Zeile],EingabeNeu);
+
+
+		printf("Das Kennwort wurde erfolgreich geändert, aktualisiere Datenbank...");
+
+		//aktualisiere Datenbank
+		ChangeDb(Datenbank);
+
+	}else{
+		printf("Kennwort Inkorrekt\n");
+	}
+}
+
+
+
+void ChangeDb(char Datenbank[][15]){
+	//zählvariable Zeile
+	int Zeile=0;
+	//Zählvariable Spalte
+	int Spalte=0;
+	//dateibearbeitung
+	//pointer auf zeichen
+	FILE *fp;
+	fp = fopen("db", "w");	//überschreibe / erstelle datei
+	//länge der aktuellen zeile
+	int Len;
+	//zeilen
+	for(Zeile=0;Zeile<240;Zeile++){
+		//spalten
+		Len=strlen(Datenbank[Zeile]);
+		for(Spalte=0;Spalte<Len;Spalte++){
+			//gebe zeichenweise ein
+			fputc(Datenbank[Zeile][Spalte],fp);
+		}
+		//füge zeilenumbruch ein
+		fputc(10,fp);
+	}
+
+	//schließe Datei
+	fclose(fp);
+
+	printf("Datenbank aktualisiert.\n");
+}
+
+
+
+
+
+
+
+void LoadDb(char Datenbank[][15]){
+	//File pointer
+	FILE *fp;
+	//indizierung in Datenbank
+	int Spalte=0;
+	int Zeile=0;
+	//temporärer speicher
+	char NaechstesZeichenAusDb;
+//öffne datei lesend
+	fp = fopen("db", "r");
+
+	//pruefe ob sich die datei öffnen lässt
+	if(fp == NULL) {
+		printf("Datei konnte nicht geoeffnet werden.\n");
+	}else {
+
+		//während Daten vorhanden lese aus db
+		while(((NaechstesZeichenAusDb=fgetc(fp))!=EOF)){
+			if(NaechstesZeichenAusDb==10){
+				Datenbank[Zeile][Spalte+1]='\0';
+				printf("%s\n",Datenbank[Zeile]);
+				Zeile++;
+				Spalte=0;
+			}else{
+				Datenbank[Zeile][Spalte]=NaechstesZeichenAusDb;
+				Spalte++;
+			}
+		}
+	}
+	//schließe file
+	fclose(fp);
+}
+
+
+
+
+
+
+void main() {
+	//erstelle platz für db
+	char Datenbank[240][15]={'0'};
+	//lade db in speicher
+	LoadDb(Datenbank);
+	//lade menue
+	menue(Datenbank);
+
+}
